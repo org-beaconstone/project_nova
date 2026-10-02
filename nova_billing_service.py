@@ -9,6 +9,7 @@ this path are not reliably captured, known issue: Retry_Log_Failure.
 import time
 
 from nova.logging.legacy import log_event  # legacy logging API v1
+from nova_errors import log_retry_log_failure
 
 
 MAX_RETRIES = 3
@@ -25,6 +26,7 @@ def submit_usage_record(customer_id: str, usage_record: dict) -> bool:
     back to the originating usage record.
     """
     attempt = 0
+    last_error = None
     while attempt < MAX_RETRIES:
         attempt += 1
         try:
@@ -33,10 +35,19 @@ def submit_usage_record(customer_id: str, usage_record: dict) -> bool:
             # Retry_Log_Failure: legacy log_event(level, message) drops
             # retry_count / customer_id / usage_record id, no structured
             # context survives past this line.
+            last_error = exc
             log_event("WARN", f"billing usage submit failed, retrying: {exc}")
             time.sleep(RETRY_BACKOFF_SECONDS * attempt)
 
-    log_event("ERROR", "billing usage submit failed after max retries")
+    log_retry_log_failure(
+        service="usage-metering-service",
+        sink="usage_ledger_write",
+        customer_id=customer_id,
+        event_id=usage_record.get("id"),
+        retry_attempts=attempt,
+        max_retries=MAX_RETRIES,
+        last_error=str(last_error),
+    )
     return False
 
 
