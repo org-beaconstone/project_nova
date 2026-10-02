@@ -15,6 +15,8 @@ from nova.logging.legacy import log_event  # legacy logging API v1
 RETRY_LOG_FAILURE = "RETRY_LOG_FAILURE"
 
 
+# Retry_Log_Failure: emits error_code=RETRY_LOG_FAILURE once retries
+# against the usage ledger are exhausted.
 def log_retry_log_failure(
     service: str,
     sink: str,

@@ -32,13 +32,13 @@ def submit_usage_record(customer_id: str, usage_record: dict) -> bool:
         try:
             return _send_to_billing_pipeline(customer_id, usage_record)
         except BillingPipelineError as exc:
-            # Retry_Log_Failure: legacy log_event(level, message) drops
-            # retry_count / customer_id / usage_record id, no structured
-            # context survives past this line.
             last_error = exc
             log_event("WARN", f"billing usage submit failed, retrying: {exc}")
             time.sleep(RETRY_BACKOFF_SECONDS * attempt)
 
+    # Retry_Log_Failure: legacy log_event(level, message) drops
+    # retry_count / customer_id / usage_record id, no structured
+    # context survives past this line.
     log_retry_log_failure(
         service="usage-metering-service",
         sink="usage_ledger_write",
