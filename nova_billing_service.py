@@ -1,11 +1,3 @@
-"""Billing usage service for the Nova platform.
-
-Submits metered usage records to the billing pipeline and retries
-transient failures. Logging still runs on the legacy logging API
-(v1), which does not accept structured fields, so retry attempts on
-this path are not reliably captured, known issue: Retry_Log_Failure.
-"""
-
 import time
 
 from nova.logging.legacy import log_event  # legacy logging API v1
